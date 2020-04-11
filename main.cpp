@@ -26,12 +26,21 @@ SDL_Surface* gCurrentSurface = NULL;
 
 SDL_Surface* loadSurface(std::string path)
 {
+	SDL_Surface* optimizedSurface = NULL;
+
 	SDL_Surface* loadedSurface = SDL_LoadBMP(path.c_str());
 	if (loadedSurface == NULL) {
 		printf("Unable to load image %s!\n", path);
+	} else {
+		optimizedSurface = SDL_ConvertSurface(loadedSurface, gScreenSurface->format, 0);
+		if (optimizedSurface == NULL)
+		{
+			printf("Unable to optimize image %s!", path.c_str());
+		}
+		SDL_FreeSurface(loadedSurface);
 	}
 
-	return loadedSurface;
+	return optimizedSurface;
 }
 
 bool init()
@@ -127,6 +136,9 @@ void main_loop()
 			}
 			else if (e.type == SDL_KEYDOWN) {
 				switch (e.key.keysym.sym) {
+					case SDLK_q:
+						quitReq = true;
+						break;
 					case SDLK_DOWN:
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN];
 						break;
@@ -145,7 +157,9 @@ void main_loop()
 						
 				}
 			}
-			SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+			// SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+			SDL_Rect stretchRect {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+			SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &stretchRect);
 			SDL_UpdateWindowSurface(window);
 		}
 	}
